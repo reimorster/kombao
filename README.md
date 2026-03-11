@@ -1,41 +1,165 @@
-# Kanban Simples
+# Kanban
 
-Frontend em React e backend em FastAPI com SQLite local.
+Aplicacao de kanban simples com frontend em React + Vite, backend em FastAPI e persistencia local em PostgreSQL.
 
-## Backend
+## Estado atual
 
-1. Crie um ambiente virtual e instale as dependencias:
-   `pip install -r backend/requirements.txt`
-2. Copie `backend/.env.example` para `backend/.env`.
-3. Defina `APP_USERNAME` e `APP_PASSWORD`.
-4. Suba a API:
-   `uvicorn app.main:app --reload --app-dir backend`
+O sistema implementado hoje cobre o fluxo basico de quadro kanban:
 
-## Frontend
+- bootstrap de administrador a partir de variaveis de ambiente no primeiro acesso
+- usuarios e sessoes persistidos em PostgreSQL
+- troca obrigatoria de senha no primeiro login do administrador bootstrap
+- namespaces para separar projetos
+- tres colunas fixas no quadro: `To do`, `Doing` e `Done`
+- criacao, edicao, exclusao e movimentacao de cards
+- painel lateral para editar detalhes da atividade
+- tema `light`, `dark` e `system`
 
-1. Instale as dependencias:
-   `npm install --prefix frontend`
-2. Se quiser outro endpoint:
-   `VITE_API_URL=http://127.0.0.1:8000 npm run dev`
-3. Rode:
-   `npm run dev --prefix frontend`
+## Stack
 
-## Docker
+- Frontend: React 18 + TypeScript + Vite
+- Backend: FastAPI + SQLAlchemy
+- Banco de dados: PostgreSQL
+- Infra local: Docker Compose opcional
 
-1. Copie `backend/.env.example` para `backend/.env`.
-2. Suba tudo:
-   `docker compose up --build`
-3. Acesse:
-   frontend em `http://localhost:5173`
-   backend em `http://localhost:8000`
+## Documentacao
 
-O banco SQLite fica persistido em `./backend/data/kanban.db`.
+- [README.md](/Users/reimor/kanban/README.md): fotografia do sistema atual e instrucoes de execucao
+- [CONTRATO.md](/Users/reimor/kanban/CONTRATO.md): contrato funcional draft e plano de evolucao
+- [ESTRATEGIA.md](/Users/reimor/kanban/ESTRATEGIA.md): ordem de execucao para as proximas fases
 
-## Recursos
+## Estrutura do repositorio
 
-- Login com usuario/senha definidos no environment
-- Namespaces em barra inferior com menu de contexto
-- Tres colunas fixas: Do, Doing e Done
-- Drag and drop nativo
-- Sidebar de detalhes da atividade
-- Tema neutro com suporte a dark mode
+```text
+.
+|-- backend/
+|   |-- app/
+|   |   |-- auth.py
+|   |   |-- database.py
+|   |   |-- main.py
+|   |   |-- models.py
+|   |   `-- schemas.py
+|   |-- data/
+|   |-- requirements.txt
+|   `-- Dockerfile
+|-- frontend/
+|   |-- src/
+|   |   |-- components/
+|   |   |-- constants/
+|   |   |-- types/
+|   |   |-- utils/
+|   |   |-- App.tsx
+|   |   |-- main.tsx
+|   |   `-- styles.css
+|   |-- package.json
+|   `-- Dockerfile
+|-- CONTRATO.md
+`-- docker-compose.yml
+```
+
+## Requisitos
+
+- Python 3.12 ou compativel
+- Node.js 22 ou compativel
+- npm
+
+## Executando localmente
+
+### 1. Backend
+
+Crie um ambiente virtual e instale as dependencias:
+
+```bash
+python -m venv backend/.venv
+source backend/.venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+Crie o arquivo `backend/.env`:
+
+```bash
+cat <<'EOF' > backend/.env
+APP_USERNAME=admin
+APP_PASSWORD=admin
+EOF
+```
+
+Suba a API:
+
+```bash
+uvicorn app.main:app --reload --app-dir backend
+```
+
+API disponivel em `http://127.0.0.1:8000`.
+
+### 2. Frontend
+
+Instale as dependencias:
+
+```bash
+npm install --prefix frontend
+```
+
+Suba a interface:
+
+```bash
+npm run dev --prefix frontend
+```
+
+Frontend disponivel em `http://127.0.0.1:5173`.
+
+Para usar outro endpoint da API:
+
+```bash
+VITE_API_URL=http://127.0.0.1:8000 npm run dev --prefix frontend
+```
+
+## Executando com Docker
+
+Garanta que `backend/.env` exista e depois rode:
+
+```bash
+docker compose up --build
+```
+
+Servicos:
+
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8000`
+- PostgreSQL: `localhost:5432`
+
+O PostgreSQL fica persistido localmente em `backend/postgres/`.
+
+## Variaveis de ambiente
+
+### Backend
+
+- `APP_USERNAME`: usuario aceito no login
+- `APP_PASSWORD`: senha aceita no login
+- `DATABASE_URL`: opcional; por padrao usa `postgresql+psycopg://kanban:kanban@localhost:5432/kanban`
+
+### Frontend
+
+- `VITE_API_URL`: URL base da API; por padrao `http://127.0.0.1:8000`
+
+## Endpoints principais
+
+- `POST /auth/login`
+- `GET /auth/me`
+- `POST /auth/change-password`
+- `PATCH /auth/me`
+- `GET /health`
+- `GET /namespaces`
+- `POST /namespaces`
+- `PATCH /namespaces/{namespace_id}`
+- `DELETE /namespaces/{namespace_id}`
+- `POST /namespaces/{namespace_id}/cards`
+- `PATCH /cards/{card_id}`
+- `DELETE /cards/{card_id}`
+
+## Notas de implementacao
+
+- O backend cria um namespace inicial automaticamente quando o banco esta vazio.
+- O ambiente de desenvolvimento assume PostgreSQL como unico banco suportado.
+- O frontend recarrega a lista de namespaces apos a maior parte das alteracoes em cards.
+- Ainda nao existem testes automatizados.

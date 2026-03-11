@@ -6,18 +6,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from .auth import get_db, issue_token, require_auth
+from .auth import (
+    bootstrap_admin_if_needed,
+    get_db,
+    issue_token,
+    require_active_user,
+    require_auth,
+    update_user_password,
+    verify_password,
+)
 from .database import Base, engine
-from .models import Card, Namespace
+from .models import Card, Namespace, User
 from .schemas import (
     CardCreate,
     CardResponse,
     CardUpdate,
+    ChangePasswordRequest,
     LoginRequest,
     LoginResponse,
     NamespaceCreate,
     NamespaceResponse,
     NamespaceUpdate,
+    ProfileUpdateRequest,
+    UserResponse,
 )
 
 STATUSES = ("do", "doing", "done")
@@ -78,6 +89,7 @@ def list_namespaces(db: Session) -> list[Namespace]:
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     with Session(engine) as db:
+        bootstrap_admin_if_needed(db)
         existing = db.scalar(select(Namespace.id).limit(1))
         if existing is None:
             db.add(Namespace(name="Projeto 1", position=0))
@@ -90,14 +102,84 @@ def healthcheck() -> dict[str, str]:
 
 
 @app.post("/auth/login", response_model=LoginResponse)
-def login(payload: LoginRequest) -> LoginResponse:
-    token = issue_token(payload.username, payload.password)
-    return LoginResponse(token=token)
+def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
+    bootstrap_admin_if_needed(db)
+    token, user = issue_token(db, payload.username, payload.password)
+    return LoginResponse(
+        token=token,
+        must_change_password=user.must_change_password,
+        user=user,
+    )
+
+
+@app.get("/auth/me", response_model=UserResponse)
+def get_current_session_user(
+    user: User = Depends(require_auth),
+) -> User:
+    return user
+
+
+@app.post("/auth/change-password", response_model=UserResponse)
+def change_password(
+    payload: ChangePasswordRequest,
+    user: User = Depends(require_auth),
+    db: Session = Depends(get_db),
+) -> User:
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Senha atual invalida.")
+
+    update_user_password(user, payload.new_password)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.patch("/auth/me", response_model=UserResponse)
+def update_profile(
+    payload: ProfileUpdateRequest,
+    user: User = Depends(require_auth),
+    db: Session = Depends(get_db),
+) -> User:
+    if payload.username is None and payload.email is None and payload.new_password is None:
+        raise HTTPException(status_code=400, detail="Nenhum campo para atualizar.")
+
+    if payload.username is not None:
+        normalized_username = payload.username.strip()
+        existing_username = db.scalar(
+            select(User).where(User.username == normalized_username, User.id != user.id)
+        )
+        if existing_username is not None:
+            raise HTTPException(status_code=409, detail="Nome de usuario ja esta em uso.")
+        user.username = normalized_username
+
+    if payload.email is not None:
+        normalized_email = payload.email.strip() or None
+        existing_email = None
+        if normalized_email is not None:
+            existing_email = db.scalar(
+                select(User).where(User.email == normalized_email, User.id != user.id)
+            )
+        if existing_email is not None:
+            raise HTTPException(status_code=409, detail="E-mail ja esta em uso.")
+        user.email = normalized_email
+
+    if payload.new_password is not None:
+        if payload.current_password is None:
+            raise HTTPException(status_code=400, detail="Senha atual obrigatoria para trocar a senha.")
+        if not verify_password(payload.current_password, user.password_hash):
+            raise HTTPException(status_code=400, detail="Senha atual invalida.")
+        update_user_password(user, payload.new_password)
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 @app.get("/namespaces", response_model=list[NamespaceResponse])
 def get_namespaces(
-    _: str = Depends(require_auth),
+    _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
 ) -> list[Namespace]:
     return list_namespaces(db)
@@ -106,7 +188,7 @@ def get_namespaces(
 @app.post("/namespaces", response_model=list[NamespaceResponse], status_code=status.HTTP_201_CREATED)
 def create_namespace(
     payload: NamespaceCreate,
-    _: str = Depends(require_auth),
+    _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
 ) -> list[Namespace]:
     next_position = db.query(Namespace).count()
@@ -119,7 +201,7 @@ def create_namespace(
 def rename_namespace(
     namespace_id: int,
     payload: NamespaceUpdate,
-    _: str = Depends(require_auth),
+    _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
 ) -> list[Namespace]:
     namespace = get_namespace_or_404(db, namespace_id)
@@ -131,7 +213,7 @@ def rename_namespace(
 @app.delete("/namespaces/{namespace_id}", response_model=list[NamespaceResponse])
 def delete_namespace(
     namespace_id: int,
-    _: str = Depends(require_auth),
+    _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
 ) -> list[Namespace]:
     namespace = get_namespace_or_404(db, namespace_id)
@@ -149,7 +231,7 @@ def delete_namespace(
 def create_card(
     namespace_id: int,
     payload: CardCreate,
-    _: str = Depends(require_auth),
+    _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
 ) -> Card:
     get_namespace_or_404(db, namespace_id)
@@ -174,7 +256,7 @@ def create_card(
 def update_card(
     card_id: int,
     payload: CardUpdate,
-    _: str = Depends(require_auth),
+    _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
 ) -> Card:
     card = get_card_or_404(db, card_id)
@@ -225,7 +307,7 @@ def update_card(
 @app.delete("/cards/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_card(
     card_id: int,
-    _: str = Depends(require_auth),
+    _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
 ) -> Response:
     card = get_card_or_404(db, card_id)

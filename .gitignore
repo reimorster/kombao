@@ -27,10 +27,10 @@ backend/.env
 # Backend data
 backend/data/
 backend/*.db
+backend/postgres/
 
 # Node
 node_modules/
 frontend/node_modules/
 frontend/dist/
 npm-debug.log*
-
