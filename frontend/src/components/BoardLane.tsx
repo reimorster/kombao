@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { DragEvent } from "react";
 import type { BoardStatus, Card } from "../types/kanban";
 
@@ -6,6 +7,7 @@ type BoardLaneProps = {
   status: BoardStatus;
   onCreateCard: () => void;
   canCreateCard: boolean;
+  showFullDescriptions: boolean;
   onCardOpen: (cardId: number) => void;
   onCardDragStart: (event: DragEvent<HTMLElement>, card: Card) => void;
   onCardDrop: (event: DragEvent<HTMLElement>, status: BoardStatus["id"]) => Promise<void>;
@@ -13,11 +15,26 @@ type BoardLaneProps = {
 
 type LaneCardProps = {
   card: Card;
+  showFullDescription: boolean;
   onOpen: (cardId: number) => void;
   onDragStart: (event: DragEvent<HTMLElement>, card: Card) => void;
 };
 
-function LaneCard({ card, onOpen, onDragStart }: LaneCardProps) {
+function LaneCard({ card, showFullDescription, onOpen, onDragStart }: LaneCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const description = card.description.trim();
+  const hasDescription = description.length > 0;
+  const shouldAllowExpansion = hasDescription && (description.length > 120 || description.includes("\n"));
+  const shouldShowDescription = showFullDescription;
+  const descriptionText = hasDescription ? description : "Sem descricao";
+  const isDescriptionExpanded = shouldShowDescription && isExpanded;
+
+  useEffect(() => {
+    if (!showFullDescription) {
+      setIsExpanded(false);
+    }
+  }, [showFullDescription]);
+
   return (
     <article
       data-card-id={card.id}
@@ -42,7 +59,27 @@ function LaneCard({ card, onOpen, onDragStart }: LaneCardProps) {
         <span />
       </div>
       <h3>{card.title}</h3>
-      <p>{card.description || "Sem detalhes adicionais."}</p>
+      {shouldShowDescription ? (
+        <div className="card-body">
+          <p className={`card-description ${isDescriptionExpanded ? "expanded" : ""}`}>
+            {descriptionText}
+          </p>
+          {shouldAllowExpansion ? (
+            <button
+              type="button"
+              className="ghost card-expand-button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsExpanded((current) => !current);
+              }}
+              aria-label={isExpanded ? "Recolher descricao" : "Expandir descricao"}
+              title={isExpanded ? "Recolher descricao" : "Expandir descricao"}
+            >
+              {isExpanded ? "–" : "..."}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -52,6 +89,7 @@ export function BoardLane({
   status,
   onCreateCard,
   canCreateCard,
+  showFullDescriptions,
   onCardOpen,
   onCardDragStart,
   onCardDrop,
@@ -85,6 +123,7 @@ export function BoardLane({
           <LaneCard
             key={card.id}
             card={card}
+            showFullDescription={showFullDescriptions}
             onOpen={onCardOpen}
             onDragStart={onCardDragStart}
           />

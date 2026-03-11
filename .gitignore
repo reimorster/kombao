@@ -1,4 +1,4 @@
-# macOS
+# OS
 .DS_Store
 
 # Editors
@@ -6,6 +6,11 @@
 .vscode/
 *.swp
 *.swo
+
+# Environment
+.env
+.env.local
+backend/.env
 
 # Python
 __pycache__/
@@ -16,21 +21,20 @@ __pycache__/
 .venv/
 venv/
 backend/.venv/
-backend/__pycache__/
-backend/app/__pycache__/
 
-# Environment files
-.env
-.env.local
-backend/.env
-
-# Backend data
+# Backend runtime data
 backend/data/
-backend/*.db
 backend/postgres/
+backend/*.db
 
-# Node
+# Frontend build and dependencies
 node_modules/
 frontend/node_modules/
 frontend/dist/
+playwright-report/
+test-results/
+
+# Logs
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

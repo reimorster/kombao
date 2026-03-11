@@ -130,6 +130,27 @@ Servicos:
 
 O PostgreSQL fica persistido localmente em `backend/postgres/`.
 
+## Testes E2E com Playwright
+
+Os testes end-to-end ficam em `e2e/` e foram desenhados para rodar em um container temporario, sem instalar Playwright localmente e sem adicionar servicos ao `docker-compose`.
+
+Exemplo:
+
+```bash
+docker run --rm -it \
+  --add-host=host.docker.internal:host-gateway \
+  -e PLAYWRIGHT_BASE_URL=http://host.docker.internal:5173 \
+  -e PLAYWRIGHT_USERNAME=admin \
+  -e PLAYWRIGHT_PASSWORD=admin \
+  -e PLAYWRIGHT_NEW_PASSWORD=admin12345 \
+  -v "$PWD:/work" \
+  -w /work/e2e \
+  mcr.microsoft.com/playwright:v1.54.2-noble \
+  bash -lc "npx -y @playwright/test test"
+```
+
+Mais detalhes em `e2e/README.md`.
+
 ## Variaveis de ambiente
 
 ### Backend

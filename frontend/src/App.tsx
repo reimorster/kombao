@@ -13,6 +13,7 @@ import type { LoginResponse as AuthLoginResponse, AuthUser } from "./types/auth"
 import { STATUSES } from "./constants/board";
 import type { DraftActivityUpdate } from "./types/contract";
 import type { Card, CardStatus, Namespace } from "./types/kanban";
+import { deriveAccentTokens } from "./utils/colorTheme";
 import { apiCardToDraftActivity, draftUpdateToApiUpdate } from "./utils/contractAdapters";
 import { groupCards } from "./utils/groupCards";
 
@@ -33,6 +34,10 @@ export default function App() {
   const [token, setToken] = useState(localStorage.getItem("kanban_token") ?? "");
   const [authForm, setAuthForm] = useState<AuthFormState>({ username: "", password: "" });
   const [theme, setTheme] = useState(localStorage.getItem("kanban_theme") ?? "system");
+  const [accentColor, setAccentColor] = useState(localStorage.getItem("kanban_accent") ?? "#305252");
+  const [showFullDescriptions, setShowFullDescriptions] = useState(
+    localStorage.getItem("kanban_show_all_descriptions") === "true",
+  );
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [namespaces, setNamespaces] = useState<Namespace[]>([]);
   const [selectedNamespaceId, setSelectedNamespaceId] = useState<number | null>(null);
@@ -64,6 +69,40 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("kanban_theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = theme === "dark" || (theme === "system" && prefersDark);
+    const {
+      bg,
+      bgStrong,
+      panel,
+      panelStrong,
+      border,
+      shadow,
+      accent,
+      accentSoft,
+      accentContrast,
+      accentGlow,
+      accentWash,
+    } = deriveAccentTokens(accentColor, isDark);
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--bg-strong", bgStrong);
+    document.documentElement.style.setProperty("--panel", panel);
+    document.documentElement.style.setProperty("--panel-strong", panelStrong);
+    document.documentElement.style.setProperty("--border", border);
+    document.documentElement.style.setProperty("--shadow", shadow);
+    document.documentElement.style.setProperty("--accent", accent);
+    document.documentElement.style.setProperty("--accent-soft", accentSoft);
+    document.documentElement.style.setProperty("--accent-contrast", accentContrast);
+    document.documentElement.style.setProperty("--accent-glow", accentGlow);
+    document.documentElement.style.setProperty("--accent-wash", accentWash);
+    localStorage.setItem("kanban_accent", accent);
+  }, [accentColor, theme]);
+
+  useEffect(() => {
+    localStorage.setItem("kanban_show_all_descriptions", String(showFullDescriptions));
+  }, [showFullDescriptions]);
 
   useEffect(() => {
     if (!token) {
@@ -388,11 +427,15 @@ export default function App() {
       <TopBar
         namespaceName={selectedNamespace?.name ?? "Sem namespace"}
         theme={theme}
+        accentColor={accentColor}
+        showFullDescriptions={showFullDescriptions}
         onThemeToggle={() =>
           setTheme((current) =>
             current === "light" ? "dark" : current === "dark" ? "system" : "light",
           )
         }
+        onToggleDescriptions={() => setShowFullDescriptions((current) => !current)}
+        onAccentColorChange={setAccentColor}
         onLogout={handleLogout}
       />
 
@@ -406,6 +449,7 @@ export default function App() {
               status={status}
               cards={groupedCards[status.id] ?? []}
               canCreateCard={status.id === "do"}
+              showFullDescriptions={showFullDescriptions}
               onCreateCard={() => openCardModal(status.id)}
               onCardOpen={setSelectedCardId}
               onCardDragStart={onCardDragStart}
