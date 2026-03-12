@@ -306,7 +306,6 @@ export function useBoardState(request: RequestFn, enabled: boolean) {
     setError("");
     try {
       const text = await file.text();
-      const text = await file.text();
       let payload;
       try {
         payload = JSON.parse(text);
