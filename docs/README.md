@@ -130,26 +130,29 @@ Servicos:
 
 O PostgreSQL fica persistido localmente em `backend/postgres/`.
 
-## Testes E2E com Playwright
+## Reset de senha do admin
 
-Os testes end-to-end ficam em `e2e/` e foram desenhados para rodar em um container temporario, sem instalar Playwright localmente e sem adicionar servicos ao `docker-compose`.
+Existe um utilitario isolado em `scripts/reset_admin_password.py` para resetar a senha de um administrador diretamente no PostgreSQL, sem alterar o backend.
 
-Exemplo:
+Exemplo com o banco padrao local:
 
 ```bash
-docker run --rm -it \
-  --add-host=host.docker.internal:host-gateway \
-  -e PLAYWRIGHT_BASE_URL=http://host.docker.internal:5173 \
-  -e PLAYWRIGHT_USERNAME=admin \
-  -e PLAYWRIGHT_PASSWORD=admin \
-  -e PLAYWRIGHT_NEW_PASSWORD=admin12345 \
-  -v "$PWD:/work" \
-  -w /work/e2e \
-  mcr.microsoft.com/playwright:v1.54.2-noble \
-  bash -lc "npx -y @playwright/test test"
+python3 scripts/reset_admin_password.py --password nova-senha-segura
 ```
 
-Mais detalhes em `e2e/README.md`.
+Exemplo apontando explicitamente para outra conexao:
+
+```bash
+python3 scripts/reset_admin_password.py \
+  --username admin \
+  --password nova-senha-segura \
+  --database-url postgresql+psycopg://kanban:kanban@localhost:5432/kanban
+```
+
+Opcoes uteis:
+
+- `--must-change-password`: obriga troca no proximo login
+- `--keep-sessions`: mantem sessoes ja emitidas; por padrao o script invalida todas
 
 ## Variaveis de ambiente
 
