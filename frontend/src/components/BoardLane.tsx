@@ -39,18 +39,13 @@ function LaneCard({ card, showFullDescription, onOpen, onDragStart }: LaneCardPr
     <article
       data-card-id={card.id}
       className="card"
+      draggable
+      aria-label={`Mover atividade ${card.title}`}
+      title="Arrastar atividade"
+      onDragStart={(event) => onDragStart(event, card)}
       onDoubleClick={() => onOpen(card.id)}
     >
-      <div
-        className="card-drag-handle"
-        draggable
-        role="button"
-        aria-label={`Mover atividade ${card.title}`}
-        title="Arrastar atividade"
-        onClick={(event) => event.stopPropagation()}
-        onDoubleClick={(event) => event.stopPropagation()}
-        onDragStart={(event) => onDragStart(event, card)}
-      >
+      <div className="card-drag-handle" aria-hidden="true">
         <span />
         <span />
         <span />

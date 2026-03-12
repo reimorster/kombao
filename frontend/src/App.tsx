@@ -50,6 +50,9 @@ export default function App() {
   const [isNamespaceModalOpen, setIsNamespaceModalOpen] = useState(false);
   const [cardModalStatus, setCardModalStatus] = useState<CardStatus | null>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
+  const appShellRef = useRef<HTMLElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
 
   const selectedNamespace = useMemo(
     () => namespaces.find((namespace) => namespace.id === selectedNamespaceId) ?? namespaces[0] ?? null,
@@ -144,6 +147,33 @@ export default function App() {
       window.removeEventListener("keydown", handleEscape);
     };
   }, []);
+
+  useEffect(() => {
+    const shell = appShellRef.current;
+    const header = headerRef.current;
+    const footer = footerRef.current;
+
+    if (!shell || !header || !footer) {
+      return;
+    }
+
+    function syncShellLayout() {
+      shell.style.setProperty("--app-header-height", `${header.offsetHeight}px`);
+      shell.style.setProperty("--app-footer-height", `${footer.offsetHeight}px`);
+    }
+
+    syncShellLayout();
+
+    const observer = new ResizeObserver(() => syncShellLayout());
+    observer.observe(header);
+    observer.observe(footer);
+    window.addEventListener("resize", syncShellLayout);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", syncShellLayout);
+    };
+  }, [error, namespaces.length, renamingId]);
 
   async function request<T>(path: string, options: RequestInit = {}) {
     const headers = new Headers(options.headers ?? {});
@@ -423,23 +453,25 @@ export default function App() {
   const groupedCards = groupCards(selectedNamespace?.cards ?? []);
 
   return (
-    <main className="app-shell">
-      <TopBar
-        namespaceName={selectedNamespace?.name ?? "Sem namespace"}
-        theme={theme}
-        accentColor={accentColor}
-        showFullDescriptions={showFullDescriptions}
-        onThemeToggle={() =>
-          setTheme((current) =>
-            current === "light" ? "dark" : current === "dark" ? "system" : "light",
-          )
-        }
-        onToggleDescriptions={() => setShowFullDescriptions((current) => !current)}
-        onAccentColorChange={setAccentColor}
-        onLogout={handleLogout}
-      />
+    <main ref={appShellRef} className="app-shell">
+      <div ref={headerRef} className="app-header">
+        <TopBar
+          namespaceName={selectedNamespace?.name ?? "Sem namespace"}
+          theme={theme}
+          accentColor={accentColor}
+          showFullDescriptions={showFullDescriptions}
+          onThemeToggle={() =>
+            setTheme((current) =>
+              current === "light" ? "dark" : current === "dark" ? "system" : "light",
+            )
+          }
+          onToggleDescriptions={() => setShowFullDescriptions((current) => !current)}
+          onAccentColorChange={setAccentColor}
+          onLogout={handleLogout}
+        />
 
-      {error ? <p className="error banner">{error}</p> : null}
+        {error ? <p className="error banner">{error}</p> : null}
+      </div>
 
       <section className="board-shell">
         <div className="board">
@@ -459,29 +491,31 @@ export default function App() {
         </div>
       </section>
 
-      <NamespaceBar
-        namespaces={namespaces}
-        selectedNamespaceId={selectedNamespace?.id ?? null}
-        renamingId={renamingId}
-        renameValue={renameValue}
-        onSelect={(namespaceId) => {
-          setSelectedNamespaceId(namespaceId);
-          setSelectedCardId(null);
-        }}
-        onRenameValueChange={setRenameValue}
-        onRenameStart={(namespaceId) => {
-          const namespace = namespaces.find((item) => item.id === namespaceId);
-          setRenamingId(namespaceId);
-          setRenameValue(namespace?.name ?? "");
-        }}
-        onRenameCancel={() => {
-          setRenamingId(null);
-          setRenameValue("");
-        }}
-        onRenameSubmit={renameNamespace}
-        onCreateNamespace={openNamespaceModal}
-        onContextMenu={(menuState) => setContextMenu(menuState)}
-      />
+      <div ref={footerRef} className="app-footer">
+        <NamespaceBar
+          namespaces={namespaces}
+          selectedNamespaceId={selectedNamespace?.id ?? null}
+          renamingId={renamingId}
+          renameValue={renameValue}
+          onSelect={(namespaceId) => {
+            setSelectedNamespaceId(namespaceId);
+            setSelectedCardId(null);
+          }}
+          onRenameValueChange={setRenameValue}
+          onRenameStart={(namespaceId) => {
+            const namespace = namespaces.find((item) => item.id === namespaceId);
+            setRenamingId(namespaceId);
+            setRenameValue(namespace?.name ?? "");
+          }}
+          onRenameCancel={() => {
+            setRenamingId(null);
+            setRenameValue("");
+          }}
+          onRenameSubmit={renameNamespace}
+          onCreateNamespace={openNamespaceModal}
+          onContextMenu={(menuState) => setContextMenu(menuState)}
+        />
+      </div>
 
       {contextMenu ? (
         <div
