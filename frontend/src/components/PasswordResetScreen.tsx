@@ -17,6 +17,8 @@ export function PasswordResetScreen({
 }: PasswordResetScreenProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,22 +42,42 @@ export function PasswordResetScreen({
         <form onSubmit={handleSubmit} className="login-form">
           <label>
             Senha atual
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              autoComplete="current-password"
-            />
+            <div className="password-wrapper">
+              <input
+                type={showCurrent ? "text" : "password"}
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowCurrent((v) => !v)}
+                tabIndex={-1}
+              >
+                <i className={showCurrent ? "ri-eye-off-line" : "ri-eye-line"} />
+              </button>
+            </div>
           </label>
           <label>
             Nova senha
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              minLength={8}
-              autoComplete="new-password"
-            />
+            <div className="password-wrapper">
+              <input
+                type={showNew ? "text" : "password"}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                minLength={8}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowNew((v) => !v)}
+                tabIndex={-1}
+              >
+                <i className={showNew ? "ri-eye-off-line" : "ri-eye-line"} />
+              </button>
+            </div>
           </label>
           {error ? <p className="error">{error}</p> : null}
           <button type="submit" disabled={loading || currentPassword.length === 0 || newPassword.length < 8}>

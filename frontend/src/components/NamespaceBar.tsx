@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type { Namespace } from "../types/kanban";
 
 type ContextMenuState = {
@@ -18,6 +19,8 @@ type NamespaceBarProps = {
   onRenameSubmit: (namespaceId: number, name: string) => Promise<void>;
   onCreateNamespace: () => void;
   onContextMenu: (contextMenu: ContextMenuState) => void;
+  onExportBackup: () => void;
+  onImportBackup: (file: File) => void;
 };
 
 export function NamespaceBar({
@@ -32,7 +35,11 @@ export function NamespaceBar({
   onRenameSubmit,
   onCreateNamespace,
   onContextMenu,
+  onExportBackup,
+  onImportBackup,
 }: NamespaceBarProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   return (
     <footer className="namespace-bar">
       <div className="namespace-tabs">
@@ -91,8 +98,35 @@ export function NamespaceBar({
           ),
         )}
       </div>
+      <div className="namespace-actions">
+        <button type="button" className="ghost namespace-create-button" onClick={onExportBackup}>
+          <i className="ri-download-2-line" /> Backup
+        </button>
+        <button
+          type="button"
+          className="ghost namespace-create-button"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <i className="ri-upload-2-line" /> Restaurar
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          style={{ display: "none" }}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) {
+              if (window.confirm("Isso vai substituir todos os dados atuais. Continuar?")) {
+                onImportBackup(file);
+              }
+              event.target.value = "";
+            }
+          }}
+        />
+      </div>
       <button type="button" className="ghost namespace-create-button" onClick={onCreateNamespace}>
-        Novo namespace
+        <i className="ri-add-line" /> Novo namespace
       </button>
     </footer>
   );

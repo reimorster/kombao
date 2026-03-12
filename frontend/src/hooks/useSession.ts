@@ -48,8 +48,12 @@ export function useSession() {
       if (!response.ok) {
         let message = "Erro inesperado.";
         try {
-          const payload = (await response.json()) as { detail?: string };
-          message = payload.detail ?? message;
+          const payload = (await response.json()) as { detail?: string | Array<{ msg: string }> };
+          if (typeof payload.detail === "string") {
+            message = payload.detail;
+          } else if (Array.isArray(payload.detail)) {
+            message = payload.detail.map((e) => e.msg).join("; ");
+          }
         } catch {
           message = response.statusText || message;
         }

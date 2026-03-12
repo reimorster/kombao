@@ -170,20 +170,22 @@ export function useBoardState(request: RequestFn, enabled: boolean) {
     }
   }
 
-  async function saveCard(cardId: number, payload: Partial<Card>) {
+  async function saveCard(cardId: number, payload: Partial<Card>, selectAfterSave = false) {
     const updatedCard = await request<Card>(`/cards/${cardId}`, {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
     await fetchNamespaces();
-    setSelectedCardId(updatedCard.id);
+    if (selectAfterSave) {
+      setSelectedCardId(updatedCard.id);
+    }
   }
 
   async function saveDraftCard(cardId: number, payload: DraftActivityUpdate) {
     setLoading(true);
     setError("");
     try {
-      await saveCard(cardId, draftUpdateToApiUpdate(payload));
+      await saveCard(cardId, draftUpdateToApiUpdate(payload), true);
     } catch (requestError) {
       setError((requestError as Error).message);
     } finally {
@@ -270,6 +272,64 @@ export function useBoardState(request: RequestFn, enabled: boolean) {
     setSelectedCardId(null);
   }
 
+  type BackupPreferences = {
+    theme: string;
+    accentColor: string;
+    showFullDescriptions: boolean;
+  };
+
+  async function exportBackup(preferences: BackupPreferences) {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await request<{ version: string; namespaces: unknown[] }>("/backup");
+      const backup = { ...data, preferences };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `kombao-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (requestError) {
+      setError((requestError as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function importBackup(
+    file: File,
+    applyPreferences: (prefs: BackupPreferences) => void,
+  ) {
+    setLoading(true);
+    setError("");
+    try {
+      const text = await file.text();
+      const text = await file.text();
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch (parseError) {
+        throw new Error("Arquivo de backup inválido. Certifique-se de que é um JSON válido.");
+      }
+      const data = await request<Namespace[]>("/restore", {
+        method: "POST",
+        body: JSON.stringify({ version: payload.version, namespaces: payload.namespaces }),
+      });
+      setNamespaces(data);
+      setSelectedNamespaceId(data[0]?.id ?? null);
+      setSelectedCardId(null);
+      if (payload.preferences) {
+        applyPreferences(payload.preferences);
+      }
+    } catch (requestError) {
+      setError((requestError as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return {
     cardModalStatus,
     closeCardModal: () => setCardModalStatus(null),
@@ -279,8 +339,10 @@ export function useBoardState(request: RequestFn, enabled: boolean) {
     createNamespace,
     deleteNamespace,
     error,
+    exportBackup,
     fetchNamespaces,
     groupedCards,
+    importBackup,
     isNamespaceModalOpen,
     loading,
     namespaces,

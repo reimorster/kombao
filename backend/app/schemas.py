@@ -86,3 +86,21 @@ class NamespaceResponse(NamespaceBase):
     id: int
     position: int
     cards: list[CardResponse]
+
+
+class BackupCard(BaseModel):
+    title: str
+    description: str
+    status: str
+    position: int
+
+
+class BackupNamespace(BaseModel):
+    name: str
+    position: int
+    cards: list[BackupCard]
+
+
+class BackupData(BaseModel):
+    version: str = "1"
+    namespaces: list[BackupNamespace]

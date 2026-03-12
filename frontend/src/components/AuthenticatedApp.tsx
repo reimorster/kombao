@@ -50,11 +50,7 @@ export function AuthenticatedApp({
           theme={preferences.theme}
           accentColor={preferences.accentColor}
           showFullDescriptions={preferences.showFullDescriptions}
-          onThemeToggle={() =>
-            preferences.setTheme((current) =>
-              current === "light" ? "dark" : current === "dark" ? "system" : "light",
-            )
-          }
+          onThemeChange={(t) => preferences.setTheme(t)}
           onToggleDescriptions={() =>
             preferences.setShowFullDescriptions((current) => !current)
           }
@@ -66,7 +62,7 @@ export function AuthenticatedApp({
           }}
         />
 
-        {error ? <p className="error banner">{error}</p> : null}
+        {error && board.cardModalStatus === null ? <p className="error banner">{error}</p> : null}
       </div>
 
       <section className="board-shell">
@@ -100,6 +96,20 @@ export function AuthenticatedApp({
           onRenameSubmit={board.renameNamespace}
           onCreateNamespace={board.openNamespaceModal}
           onContextMenu={board.setContextMenu}
+          onExportBackup={() =>
+            board.exportBackup({
+              theme: preferences.theme,
+              accentColor: preferences.accentColor,
+              showFullDescriptions: preferences.showFullDescriptions,
+            })
+          }
+          onImportBackup={(file) =>
+            board.importBackup(file, (prefs) => {
+              preferences.setTheme(prefs.theme);
+              preferences.setAccentColor(prefs.accentColor);
+              preferences.setShowFullDescriptions(prefs.showFullDescriptions);
+            })
+          }
         />
       </div>
 
@@ -161,6 +171,7 @@ export function AuthenticatedApp({
       <CardModal
         isOpen={board.cardModalStatus !== null}
         loading={loading}
+        error={board.error}
         status={board.cardModalStatus}
         onClose={board.closeCardModal}
         onSubmit={board.createCard}

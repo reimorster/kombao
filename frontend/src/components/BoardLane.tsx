@@ -22,6 +22,7 @@ type LaneCardProps = {
 
 function LaneCard({ card, showFullDescription, onOpen, onDragStart }: LaneCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [wasDragging, setWasDragging] = useState(false);
   const description = card.description.trim();
   const hasDescription = description.length > 0;
   const shouldAllowExpansion = hasDescription && (description.length > 120 || description.includes("\n"));
@@ -42,8 +43,13 @@ function LaneCard({ card, showFullDescription, onOpen, onDragStart }: LaneCardPr
       draggable
       aria-label={`Mover atividade ${card.title}`}
       title="Arrastar atividade"
-      onDragStart={(event) => onDragStart(event, card)}
-      onDoubleClick={() => onOpen(card.id)}
+      onDragStart={(event) => {
+        setWasDragging(true);
+        onDragStart(event, card);
+      }}
+      onDragEnd={() => {
+        setTimeout(() => setWasDragging(false), 0);
+      }}
     >
       <div className="card-drag-handle" aria-hidden="true">
         <span />
@@ -53,7 +59,31 @@ function LaneCard({ card, showFullDescription, onOpen, onDragStart }: LaneCardPr
         <span />
         <span />
       </div>
-      <h3>{card.title}</h3>
+      <div className="card-header">
+        <span className="card-id">#{card.id}</span>
+        <h3>
+          <div
+            className="card-title-link"
+            role="button"
+            tabIndex={0}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (wasDragging) return;
+              onOpen(card.id);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                if (wasDragging) return;
+                onOpen(card.id);
+              }
+            }}
+          >
+            {card.title}
+          </div>
+        </h3>
+      </div>
       {shouldShowDescription ? (
         <div className="card-body">
           <p className={`card-description ${isDescriptionExpanded ? "expanded" : ""}`}>
