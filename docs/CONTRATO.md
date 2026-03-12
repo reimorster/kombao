@@ -174,7 +174,7 @@ Escopo sugerido:
 
 Ponto de uso recomendado para a primeira iteracao:
 
-- [frontend/src/components/CardDetails.tsx](/Users/reimor/kanban/frontend/src/components/CardDetails.tsx)
+- `frontend/src/components/CardDetails.tsx`
 
 Razao:
 

@@ -1,6 +1,6 @@
 # Estrategia de Implementacao
 
-Este documento transforma o [CONTRATO.md](/Users/reimor/kanban/CONTRATO.md) em uma sequencia pratica de execucao para as proximas iteracoes.
+Este documento transforma o [CONTRATO.md](./CONTRATO.md) em uma sequencia pratica de execucao para as proximas iteracoes.
 
 ## Principios
 
@@ -21,7 +21,7 @@ Abordagem:
 - manter a API atual como fonte de dados
 - adicionar tipos de dominio draft no frontend
 - criar adaptadores entre contrato atual e contrato draft
-- validar o novo contrato em [frontend/src/components/CardDetails.tsx](/Users/reimor/kanban/frontend/src/components/CardDetails.tsx)
+- validar o novo contrato em `frontend/src/components/CardDetails.tsx`
 
 Resultado esperado:
 
