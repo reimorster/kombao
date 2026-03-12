@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 
 type LoginScreenProps = {
@@ -17,13 +18,15 @@ type LoginScreenProps = {
 };
 
 export function LoginScreen({ authForm, error, loading, onChange, onSubmit }: LoginScreenProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <main className="login-shell">
       <section className="login-panel">
-        <div>
+        <div className="login-header">
           <p className="eyebrow">Kombão</p>
-          <h2>Dead simple self-hosted Kanban</h2>
-          <p className="muted">Insira suas credenciais</p>
+          <h2>Dead simple<br />self-hosted Kanban</h2>
+          <p className="muted">Insira suas credenciais para continuar</p>
         </div>
         <form onSubmit={onSubmit} className="login-form">
           <label>
@@ -39,15 +42,25 @@ export function LoginScreen({ authForm, error, loading, onChange, onSubmit }: Lo
           </label>
           <label>
             Senha
-            <input
-              type="password"
-              value={authForm.password}
-              onChange={(event) =>
-                onChange((current) => ({ ...current, password: event.target.value }))
-              }
-              placeholder="senha"
-              autoComplete="current-password"
-            />
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={authForm.password}
+                onChange={(event) =>
+                  onChange((current) => ({ ...current, password: event.target.value }))
+                }
+                placeholder="senha"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((v) => !v)}
+                tabIndex={-1}
+              >
+                <i className={showPassword ? "ri-eye-off-line" : "ri-eye-line"} />
+              </button>
+            </div>
           </label>
           {error ? <p className="error">{error}</p> : null}
           <button type="submit" disabled={loading}>

@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: kanban
       POSTGRES_PASSWORD: kanban
     ports:
-      - "5432:5432"
+      - "5847:5432"
     volumes:
       - ./backend/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -18,7 +18,7 @@ services:
   backend:
     build:
       context: ./backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8391 --reload
     env_file:
       - path: ./backend/.env
         required: false
@@ -28,7 +28,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "8391:8391"
     volumes:
       - ./backend/app:/app/app
       - ./backend/data:/app/data
@@ -36,13 +36,13 @@ services:
   frontend:
     build:
       context: ./frontend
-    command: npm run dev -- --host 0.0.0.0 --port 5173
+    command: npm run dev -- --host 0.0.0.0 --port 5679
     environment:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_URL: http://localhost:8391
     depends_on:
       - backend
     ports:
-      - "5173:5173"
+      - "5679:5679"
     volumes:
       - ./frontend:/app
       - /app/node_modules

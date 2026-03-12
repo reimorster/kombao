@@ -7,12 +7,13 @@ import { Modal } from "./Modal";
 type CardModalProps = {
   isOpen: boolean;
   loading: boolean;
+  error: string;
   status: CardStatus | null;
   onClose: () => void;
-  onSubmit: (title: string, description: string, status: CardStatus) => Promise<void>;
+  onSubmit: (status: CardStatus, title: string, description: string) => Promise<void>;
 };
 
-export function CardModal({ isOpen, loading, status, onClose, onSubmit }: CardModalProps) {
+export function CardModal({ isOpen, loading, error, status, onClose, onSubmit }: CardModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -32,7 +33,7 @@ export function CardModal({ isOpen, loading, status, onClose, onSubmit }: CardMo
     if (!trimmed) {
       return;
     }
-    await onSubmit(trimmed, description.trim(), currentStatus);
+    await onSubmit(currentStatus, trimmed, description.trim());
   }
 
   return (
@@ -55,12 +56,13 @@ export function CardModal({ isOpen, loading, status, onClose, onSubmit }: CardMo
         <label>
           Descrição
           <textarea
-            rows={5}
+            rows={3}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Contexto, dependências ou observações."
           />
         </label>
+        {error ? <p className="error">{error}</p> : null}
         <div className="modal-actions">
           <button type="button" className="ghost" onClick={onClose}>
             Cancelar

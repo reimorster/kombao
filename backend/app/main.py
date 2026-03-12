@@ -19,6 +19,7 @@ from .database import Base, engine
 from .migrations import apply_runtime_migrations
 from .models import Card, Namespace, User
 from .schemas import (
+    BackupData,
     CardCreate,
     CardResponse,
     CardUpdate,
@@ -301,6 +302,66 @@ def update_card(
     db.commit()
     db.refresh(card)
     return card
+
+
+@app.get("/backup", response_model=BackupData)
+def export_backup(
+    _: User = Depends(require_active_user),
+    db: Session = Depends(get_db),
+) -> BackupData:
+    namespaces = list_namespaces(db)
+    return BackupData(
+        version="1",
+        namespaces=[
+            {
+                "name": ns.name,
+                "position": ns.position,
+                "cards": [
+                    {
+                        "title": c.title,
+                        "description": c.description,
+                        "status": c.status,
+                        "position": c.position,
+                    }
+                    for c in sorted(ns.cards, key=lambda c: (c.status, c.position))
+                ],
+            }
+            for ns in namespaces
+        ],
+    )
+
+
+@app.post("/restore", response_model=list[NamespaceResponse])
+def import_backup(
+    payload: BackupData,
+    _: User = Depends(require_active_user),
+    db: Session = Depends(get_db),
+) -> list[Namespace]:
+    db.query(Card).delete()
+    db.query(Namespace).delete()
+    db.flush()
+
+    for ns_data in payload.namespaces:
+        ns = Namespace(name=ns_data.name.strip(), position=ns_data.position)
+        db.add(ns)
+        db.flush()
+        for card_data in ns_data.cards:
+            if card_data.status not in STATUSES:
+                raise HTTPException(status_code=400, detail=f"Status inválido: {card_data.status}")
+            db.add(Card(
+                namespace_id=ns.id,
+                title=card_data.title.strip(),
+                description=card_data.description.strip(),
+                status=card_data.status,
+                position=card_data.position,
+            ))
+    db.commit()
+
+    if db.query(Namespace).count() == 0:
+        db.add(Namespace(name="Projeto 1", position=0))
+        db.commit()
+
+    return list_namespaces(db)
 
 
 @app.delete("/cards/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
