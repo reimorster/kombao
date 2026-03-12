@@ -41,10 +41,10 @@ export function CardModal({ isOpen, loading, status, onClose, onSubmit }: CardMo
         <div>
           <p className="eyebrow">{statusLabel}</p>
           <h2>Nova atividade</h2>
-          <p className="muted">Adicione uma tarefa diretamente na coluna selecionada.</p>
+          <p className="muted">Adicione uma tarefa.</p>
         </div>
         <label>
-          Titulo
+          Título
           <input
             autoFocus
             value={title}
@@ -53,12 +53,12 @@ export function CardModal({ isOpen, loading, status, onClose, onSubmit }: CardMo
           />
         </label>
         <label>
-          Descricao
+          Descrição
           <textarea
             rows={5}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="Contexto, dependencias ou observacoes."
+            placeholder="Contexto, dependências ou observações."
           />
         </label>
         <div className="modal-actions">

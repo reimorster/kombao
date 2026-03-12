@@ -33,7 +33,7 @@ export function NamespaceModal({ isOpen, loading, onClose, onSubmit }: Namespace
         <div>
           <p className="eyebrow">Kombão</p>
           <h2>Novo namespace</h2>
-          <p className="muted">Crie uma nova area de trabalho sem sair do fluxo atual.</p>
+          <p className="muted">Crie uma nova área de trabalho sem sair do fluxo atual.</p>
         </div>
         <label>
           Nome
@@ -41,7 +41,7 @@ export function NamespaceModal({ isOpen, loading, onClose, onSubmit }: Namespace
             autoFocus
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Ex.: Operacao semana"
+            placeholder="Ex.: Operação semana"
           />
         </label>
         <div className="modal-actions">

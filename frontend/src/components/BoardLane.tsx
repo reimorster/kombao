@@ -26,7 +26,7 @@ function LaneCard({ card, showFullDescription, onOpen, onDragStart }: LaneCardPr
   const hasDescription = description.length > 0;
   const shouldAllowExpansion = hasDescription && (description.length > 120 || description.includes("\n"));
   const shouldShowDescription = showFullDescription;
-  const descriptionText = hasDescription ? description : "Sem descricao";
+  const descriptionText = hasDescription ? description : "Sem descrição";
   const isDescriptionExpanded = shouldShowDescription && isExpanded;
 
   useEffect(() => {
@@ -67,8 +67,8 @@ function LaneCard({ card, showFullDescription, onOpen, onDragStart }: LaneCardPr
                 event.stopPropagation();
                 setIsExpanded((current) => !current);
               }}
-              aria-label={isExpanded ? "Recolher descricao" : "Expandir descricao"}
-              title={isExpanded ? "Recolher descricao" : "Expandir descricao"}
+              aria-label={isExpanded ? "Recolher descrição" : "Expandir descrição"}
+              title={isExpanded ? "Recolher descrição" : "Expandir descrição"}
             >
               {isExpanded ? "–" : "..."}
             </button>

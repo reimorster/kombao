@@ -1,6 +1,7 @@
 export type AuthUser = {
   id: number;
   username: string;
+  display_name: string;
   email: string | null;
   role: "admin" | "user";
   must_change_password: boolean;

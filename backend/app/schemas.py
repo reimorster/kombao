@@ -19,6 +19,7 @@ class UserResponse(BaseModel):
 
     id: int
     username: str
+    display_name: str
     email: EmailStr | None = None
     role: str
     must_change_password: bool
@@ -33,8 +34,8 @@ class ChangePasswordRequest(BaseModel):
 
 
 class ProfileUpdateRequest(BaseModel):
-    username: str | None = Field(default=None, min_length=1, max_length=120)
-    email: EmailStr | None = None
+    display_name: str | None = Field(default=None, min_length=1, max_length=120)
+    email: EmailStr | None = Field(default=None)
     current_password: str | None = Field(default=None, min_length=1, max_length=255)
     new_password: str | None = Field(default=None, min_length=8, max_length=255)
 

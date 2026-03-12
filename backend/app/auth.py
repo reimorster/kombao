@@ -48,7 +48,7 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     algorithm, iterations, salt, expected_digest = password_hash.split("$", 3)
     if algorithm != "pbkdf2_sha256":
-        raise HTTPException(status_code=500, detail="Algoritmo de senha invalido.")
+        raise HTTPException(status_code=500, detail="Algoritmo de senha inválido.")
 
     digest = hashlib.pbkdf2_hmac(
         "sha256",
@@ -68,6 +68,7 @@ def bootstrap_admin_if_needed(db: Session) -> None:
     db.add(
         User(
             username=username,
+            display_name=username,
             email=email,
             password_hash=hash_password(password),
             role="admin",
@@ -83,7 +84,7 @@ def issue_token(db: Session, username: str, password: str) -> tuple[str, User]:
     if user is None or not verify_password(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciais invalidas.",
+            detail="Credenciais inválidas.",
         )
 
     token = secrets.token_urlsafe(32)
@@ -100,7 +101,7 @@ def get_current_user(
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Autenticacao obrigatoria.",
+            detail="Autenticação obrigatória.",
         )
 
     session = db.scalar(
@@ -109,7 +110,7 @@ def get_current_user(
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sessao expirada. Faça login novamente.",
+            detail="Sessão expirada. Faça login novamente.",
         )
 
     session.last_used_at = utc_now()
@@ -125,7 +126,7 @@ def require_active_user(user: User = Depends(get_current_user)) -> User:
     if user.must_change_password:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Troca de senha obrigatoria antes de continuar.",
+            detail="Troca de senha obrigatória antes de continuar.",
         )
     return user
 

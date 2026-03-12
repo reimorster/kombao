@@ -23,13 +23,13 @@ export const DRAFT_ACTIVITY_STATUSES: DraftStatusMeta[] = [
   {
     id: "ongoing",
     label: "Ongoing",
-    description: "Atividade em execucao no quadro principal.",
+    description: "Atividade em execução no quadro principal.",
     apiReady: true,
   },
   {
     id: "done",
     label: "Done",
-    description: "Atividade concluida dentro do fluxo principal.",
+    description: "Atividade concluída dentro do fluxo principal.",
     apiReady: true,
   },
   {
@@ -95,7 +95,7 @@ function buildDraftHistory(card: Card): DraftActivityEvent[] {
       type: "updated",
       occurredAt: card.updated_at,
       actorLabel: "Sistema atual",
-      message: "Ultima atualizacao registrada pela API atual.",
+      message: "Última atualização registrada pela API atual.",
     });
   }
 
@@ -132,7 +132,7 @@ export function draftUpdateToApiUpdate(update: DraftActivityUpdate): Partial<Car
   if (update.status !== undefined) {
     const apiStatus = draftStatusToApiStatus(update.status);
     if (apiStatus === null) {
-      throw new Error("Este estado do draft ainda nao e suportado pela API atual.");
+      throw new Error("Este estado do draft ainda não é suportado pela API atual.");
     }
     next.status = apiStatus;
   }

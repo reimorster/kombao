@@ -16,6 +16,7 @@ from .auth import (
     verify_password,
 )
 from .database import Base, engine
+from .migrations import apply_runtime_migrations
 from .models import Card, Namespace, User
 from .schemas import (
     CardCreate,
@@ -66,14 +67,14 @@ def normalize_card_positions(db: Session, namespace_id: int, status_name: str) -
 def get_namespace_or_404(db: Session, namespace_id: int) -> Namespace:
     namespace = db.get(Namespace, namespace_id)
     if namespace is None:
-        raise HTTPException(status_code=404, detail="Namespace nao encontrado.")
+        raise HTTPException(status_code=404, detail="Namespace não encontrado.")
     return namespace
 
 
 def get_card_or_404(db: Session, card_id: int) -> Card:
     card = db.get(Card, card_id)
     if card is None:
-        raise HTTPException(status_code=404, detail="Card nao encontrado.")
+        raise HTTPException(status_code=404, detail="Card não encontrado.")
     return card
 
 
@@ -89,6 +90,7 @@ def list_namespaces(db: Session) -> list[Namespace]:
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     with Session(engine) as db:
+        apply_runtime_migrations(engine, db)
         bootstrap_admin_if_needed(db)
         existing = db.scalar(select(Namespace.id).limit(1))
         if existing is None:
@@ -126,7 +128,7 @@ def change_password(
     db: Session = Depends(get_db),
 ) -> User:
     if not verify_password(payload.current_password, user.password_hash):
-        raise HTTPException(status_code=400, detail="Senha atual invalida.")
+        raise HTTPException(status_code=400, detail="Senha atual inválida.")
 
     update_user_password(user, payload.new_password)
     db.add(user)
@@ -141,34 +143,31 @@ def update_profile(
     user: User = Depends(require_auth),
     db: Session = Depends(get_db),
 ) -> User:
-    if payload.username is None and payload.email is None and payload.new_password is None:
+    provided_fields = payload.model_fields_set
+
+    if not {"display_name", "email", "new_password"} & provided_fields:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar.")
 
-    if payload.username is not None:
-        normalized_username = payload.username.strip()
-        existing_username = db.scalar(
-            select(User).where(User.username == normalized_username, User.id != user.id)
-        )
-        if existing_username is not None:
-            raise HTTPException(status_code=409, detail="Nome de usuario ja esta em uso.")
-        user.username = normalized_username
+    if "display_name" in provided_fields and payload.display_name is not None:
+        user.display_name = payload.display_name.strip()
 
-    if payload.email is not None:
-        normalized_email = payload.email.strip() or None
+    if "email" in provided_fields:
+        normalized_email = payload.email.strip() if payload.email is not None else None
+        normalized_email = normalized_email or None
         existing_email = None
         if normalized_email is not None:
             existing_email = db.scalar(
                 select(User).where(User.email == normalized_email, User.id != user.id)
             )
         if existing_email is not None:
-            raise HTTPException(status_code=409, detail="E-mail ja esta em uso.")
+            raise HTTPException(status_code=409, detail="E-mail já está em uso.")
         user.email = normalized_email
 
-    if payload.new_password is not None:
+    if "new_password" in provided_fields and payload.new_password is not None:
         if payload.current_password is None:
-            raise HTTPException(status_code=400, detail="Senha atual obrigatoria para trocar a senha.")
+            raise HTTPException(status_code=400, detail="Senha atual obrigatória para trocar a senha.")
         if not verify_password(payload.current_password, user.password_hash):
-            raise HTTPException(status_code=400, detail="Senha atual invalida.")
+            raise HTTPException(status_code=400, detail="Senha atual inválida.")
         update_user_password(user, payload.new_password)
 
     db.add(user)
@@ -271,7 +270,7 @@ def update_card(
     target_namespace_id = payload.namespace_id if payload.namespace_id is not None else card.namespace_id
     target_status = payload.status if payload.status is not None else card.status
     if target_status not in STATUSES:
-        raise HTTPException(status_code=400, detail="Status invalido.")
+        raise HTTPException(status_code=400, detail="Status inválido.")
     get_namespace_or_404(db, target_namespace_id)
 
     moved = target_namespace_id != card.namespace_id or target_status != card.status

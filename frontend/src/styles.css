@@ -118,6 +118,11 @@ textarea {
   resize: vertical;
 }
 
+input:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
 .ghost {
   background: transparent;
   border-color: var(--border);
@@ -264,6 +269,13 @@ textarea {
   min-width: 0;
   overflow-x: auto;
   padding-bottom: 0.1rem;
+}
+
+.user-button {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .board-shell {

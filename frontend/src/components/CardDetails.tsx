@@ -29,7 +29,7 @@ export function CardDetails({ card, onSave, onDelete, onClose }: CardDetailsProp
       </div>
 
       <label>
-        Titulo
+        Título
         <input
           value={draft.title}
           onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
@@ -49,13 +49,13 @@ export function CardDetails({ card, onSave, onDelete, onClose }: CardDetailsProp
           ))}
         </select>
         <small className="field-hint">
-          Estados fora do board principal ja fazem parte do contrato draft, mas ainda nao sao
+          Estados fora do board principal já fazem parte do contrato draft, mas ainda não são
           persistidos pela API atual.
         </small>
       </label>
 
       <label>
-        Descricao
+        Descrição
         <textarea
           rows={10}
           value={draft.description}
@@ -67,18 +67,18 @@ export function CardDetails({ card, onSave, onDelete, onClose }: CardDetailsProp
 
       <section className="details-section">
         <div className="details-section-header">
-          <p className="eyebrow">Permissoes</p>
+          <p className="eyebrow">Permissões</p>
           <span className="pill">{card.permissions.join(", ")}</span>
         </div>
         <p className="muted">
-          O contrato draft ja reserva espaco para `read`, `write_limited` e `write`. Nesta fase,
-          o frontend assume permissao total no namespace atual.
+          O contrato draft já reserva espaço para `read`, `write_limited` e `write`. Nesta fase,
+          o frontend assume permissão total no namespace atual.
         </p>
       </section>
 
       <section className="details-section">
         <div className="details-section-header">
-          <p className="eyebrow">Historico</p>
+          <p className="eyebrow">Histórico</p>
           <span className="pill">draft</span>
         </div>
         <div className="history-list">

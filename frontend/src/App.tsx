@@ -8,6 +8,7 @@ import { Modal } from "./components/Modal";
 import { NamespaceBar } from "./components/NamespaceBar";
 import { NamespaceModal } from "./components/NamespaceModal";
 import { PasswordResetScreen } from "./components/PasswordResetScreen";
+import { ProfileSettingsModal } from "./components/ProfileSettingsModal";
 import { TopBar } from "./components/TopBar";
 import type { LoginResponse as AuthLoginResponse, AuthUser } from "./types/auth";
 import { STATUSES } from "./constants/board";
@@ -48,6 +49,7 @@ export default function App() {
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [isNamespaceModalOpen, setIsNamespaceModalOpen] = useState(false);
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [cardModalStatus, setCardModalStatus] = useState<CardStatus | null>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const appShellRef = useRef<HTMLElement | null>(null);
@@ -191,7 +193,7 @@ export default function App() {
 
     if (response.status === 401) {
       handleLogout();
-      throw new Error("Sessao expirada.");
+      throw new Error("Sessão expirada.");
     }
 
     if (!response.ok) {
@@ -278,6 +280,7 @@ export default function App() {
     setNamespaces([]);
     setSelectedNamespaceId(null);
     setSelectedCardId(null);
+    setIsProfileSettingsOpen(false);
   }
 
   async function handleRequiredPasswordChange(currentPassword: string, newPassword: string) {
@@ -310,6 +313,18 @@ export default function App() {
       setSelectedNamespaceId(created.id);
       setSelectedCardId(null);
     }
+  }
+
+  async function updateProfile(displayName: string, email: string) {
+    const user = await request<AuthUser>("/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify({
+        display_name: displayName,
+        email: email || null,
+      }),
+    });
+    setCurrentUser(user);
+    setIsProfileSettingsOpen(false);
   }
 
   async function renameNamespace(namespaceId: number, name: string) {
@@ -442,9 +457,9 @@ export default function App() {
     return (
       <main className="login-shell">
         <section className="login-panel">
-          <p className="eyebrow">Sessao</p>
+          <p className="eyebrow">Sessão</p>
           <h1>Carregando perfil</h1>
-          <p className="muted">Validando a sessao persistida no backend.</p>
+          <p className="muted">Validando a sessão persistida no backend.</p>
         </section>
       </main>
     );
@@ -457,6 +472,7 @@ export default function App() {
       <div ref={headerRef} className="app-header">
         <TopBar
           namespaceName={selectedNamespace?.name ?? "Sem namespace"}
+          currentUserLabel={currentUser.display_name || currentUser.username}
           theme={theme}
           accentColor={accentColor}
           showFullDescriptions={showFullDescriptions}
@@ -467,6 +483,7 @@ export default function App() {
           }
           onToggleDescriptions={() => setShowFullDescriptions((current) => !current)}
           onAccentColorChange={setAccentColor}
+          onOpenProfileSettings={() => setIsProfileSettingsOpen(true)}
           onLogout={handleLogout}
         />
 
@@ -559,6 +576,24 @@ export default function App() {
           try {
             await createNamespace(name);
             setIsNamespaceModalOpen(false);
+          } catch (requestError) {
+            setError((requestError as Error).message);
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
+
+      <ProfileSettingsModal
+        isOpen={isProfileSettingsOpen}
+        loading={loading}
+        user={currentUser}
+        onClose={() => setIsProfileSettingsOpen(false)}
+        onSubmit={async ({ displayName, email }) => {
+          setLoading(true);
+          setError("");
+          try {
+            await updateProfile(displayName, email);
           } catch (requestError) {
             setError((requestError as Error).message);
           } finally {

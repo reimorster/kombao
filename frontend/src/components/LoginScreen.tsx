@@ -22,18 +22,18 @@ export function LoginScreen({ authForm, error, loading, onChange, onSubmit }: Lo
       <section className="login-panel">
         <div>
           <p className="eyebrow">Kombão</p>
-          <h1>Dead simple self-hosted Kanban</h1>
-          <p className="muted">Inserir suas credenciais</p>
+          <h2>Dead simple self-hosted Kanban</h2>
+          <p className="muted">Insira suas credenciais</p>
         </div>
         <form onSubmit={onSubmit} className="login-form">
           <label>
-            Usuario
+            Usuário
             <input
               value={authForm.username}
               onChange={(event) =>
                 onChange((current) => ({ ...current, username: event.target.value }))
               }
-              placeholder="admin"
+              placeholder="nome de usuário"
               autoComplete="username"
             />
           </label>
@@ -45,7 +45,7 @@ export function LoginScreen({ authForm, error, loading, onChange, onSubmit }: Lo
               onChange={(event) =>
                 onChange((current) => ({ ...current, password: event.target.value }))
               }
-              placeholder="admin"
+              placeholder="senha"
               autoComplete="current-password"
             />
           </label>

@@ -4,23 +4,27 @@ const PRESET_COLORS = ["#305252", "#8b5e3c", "#2f6e5b", "#7a4f67", "#286c8f", "#
 
 type TopBarProps = {
   namespaceName: string;
+  currentUserLabel: string;
   theme: string;
   accentColor: string;
   showFullDescriptions: boolean;
   onThemeToggle: () => void;
   onToggleDescriptions: () => void;
   onAccentColorChange: (color: string) => void;
+  onOpenProfileSettings: () => void;
   onLogout: () => void;
 };
 
 export function TopBar({
   namespaceName,
+  currentUserLabel,
   theme,
   accentColor,
   showFullDescriptions,
   onThemeToggle,
   onToggleDescriptions,
   onAccentColorChange,
+  onOpenProfileSettings,
   onLogout,
 }: TopBarProps) {
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -128,10 +132,13 @@ export function TopBar({
           ) : null}
         </div>
         <button type="button" className="ghost" onClick={onToggleDescriptions}>
-          Descricoes: {showFullDescriptions ? "on" : "off"}
+          Descrições: {showFullDescriptions ? "on" : "off"}
         </button>
         <button type="button" className="ghost" onClick={onThemeToggle}>
           Tema: {theme}
+        </button>
+        <button type="button" className="ghost user-button" onClick={onOpenProfileSettings}>
+          {currentUserLabel}
         </button>
         <button type="button" className="ghost" onClick={onLogout}>
           Sair

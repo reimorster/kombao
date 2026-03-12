@@ -31,9 +31,9 @@ export function PasswordResetScreen({
       <section className="login-panel">
         <div>
           <p className="eyebrow">Primeiro acesso</p>
-          <h1>Troca de senha obrigatoria</h1>
+          <h1>Troca de senha obrigatória</h1>
           <p className="muted">
-            O usuario <strong>{user.username}</strong> foi criado a partir do bootstrap do backend.
+            O usuário <strong>{user.username}</strong> foi criado a partir do bootstrap do backend.
             Antes de usar o sistema, defina uma nova senha.
           </p>
         </div>
