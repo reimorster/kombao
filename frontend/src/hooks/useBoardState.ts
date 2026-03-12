@@ -306,7 +306,13 @@ export function useBoardState(request: RequestFn, enabled: boolean) {
     setError("");
     try {
       const text = await file.text();
-      const payload = JSON.parse(text);
+      const text = await file.text();
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch (parseError) {
+        throw new Error("Arquivo de backup inválido. Certifique-se de que é um JSON válido.");
+      }
       const data = await request<Namespace[]>("/restore", {
         method: "POST",
         body: JSON.stringify({ version: payload.version, namespaces: payload.namespaces }),
