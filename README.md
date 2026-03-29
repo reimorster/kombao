@@ -1,13 +1,16 @@
 # Kombão
 
-Aplicação de kanban self-hosted com frontend em React + Vite, backend em FastAPI e persistência em PostgreSQL.
+Dead simple self-hosted kanban, no cluttering no dates no cargo cult.
 
-Este `README.md` é a fonte de verdade sobre o estado atual da codebase.
+Side project that began with vibecoding and then I turned it into something I actually use on a daily basis.
 
 ## Estado atual
+- Depois uns dias de desenvolvimento, não tive mais interesse em prosseguir.
+- O aplicativo já me atende para o que foi criado (organizar as tarefas basicas de forma visual e em vários workspaces)
+- Nunca pretendi implementar datas, vinculações ou automações severas. Tenho tdah e nunca consegui usar ferramentas de produtividade por muito tempo.
 
-Hoje o projeto entrega:
 
+## Recursos existentes
 - autenticação com usuário bootstrap definido em `backend/.env`
 - persistência de usuários e sessões em PostgreSQL
 - troca obrigatória de senha no primeiro login do administrador bootstrap
@@ -30,7 +33,6 @@ Limitações relevantes no estado atual:
 - não existem testes automatizados no repositório
 
 ## Stack
-
 - Frontend: React 18, TypeScript e Vite
 - Backend: FastAPI, SQLAlchemy e Pydantic
 - Banco de dados: PostgreSQL
@@ -41,6 +43,8 @@ Limitações relevantes no estado atual:
 ```text
 .
 |-- README.md
+|-- README_en-US.md
+|-- DEPLOY.md
 |-- docker-compose.yml
 |-- backend/
 |   |-- app/
@@ -63,7 +67,8 @@ Limitações relevantes no estado atual:
 |   |   |-- main.tsx
 |   |   `-- styles.css
 |   |-- package.json
-|   `-- Dockerfile
+|   |-- Dockerfile
+|   `-- Dockerfile.dev
 |-- docs/
 |   |-- CONTRATO.md
 |   |-- ESTRATEGIA.md
@@ -86,7 +91,7 @@ Limitações relevantes no estado atual:
 Se for rodar sem Docker Compose, suba um PostgreSQL e configure:
 
 ```bash
-export DATABASE_URL=postgresql+psycopg://kanban:kanban@localhost:5432/kanban
+export DATABASE_URL=postgresql+psycopg://admin:admin123kanban@localhost:5847/kanban
 ```
 
 ### 2. Backend
@@ -108,6 +113,8 @@ APP_PASSWORD=admin
 APP_EMAIL=
 EOF
 ```
+
+O backend lê esse arquivo em `backend/.env`.
 
 Suba a API:
 
@@ -136,10 +143,12 @@ Frontend disponível em `http://127.0.0.1:5173`.
 Para apontar para outra API:
 
 ```bash
-VITE_API_URL=http://127.0.0.1:8000 npm run dev --prefix frontend
+VITE_API_URL=http://127.0.0.1:8000/api npm run dev --prefix frontend
 ```
 
-## Execução com Docker
+## Execução com Docker Compose
+
+Este fluxo é voltado para desenvolvimento local com containers.
 
 Garanta que `backend/.env` exista e rode:
 
@@ -149,11 +158,17 @@ docker compose up --build
 
 Serviços:
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:8000`
-- PostgreSQL: `localhost:5432`
+- Frontend (Vite dev server): `http://localhost:5679`
+- Backend: `http://localhost:8391`
+- PostgreSQL: `localhost:5847`
 
 O PostgreSQL fica persistido em `backend/postgres/`.
+
+Notas:
+
+- o serviço `frontend` do Compose usa `frontend/Dockerfile.dev`
+- `frontend/Dockerfile` é para build estático, não para rodar o frontend de deploy como container permanente
+- instruções de deploy estão em `DEPLOY.md`
 
 ## Variáveis de ambiente
 
@@ -163,32 +178,35 @@ O PostgreSQL fica persistido em `backend/postgres/`.
 - `APP_PASSWORD`: senha inicial do administrador bootstrap
 - `APP_EMAIL`: e-mail inicial opcional do administrador bootstrap
 - `DATABASE_URL`: conexão com PostgreSQL
+- `DB_NAME`: nome do banco usado no `docker-compose.yml` quando `DATABASE_URL` não for montada externamente
+- `DB_USER`: usuário do PostgreSQL no `docker-compose.yml`
+- `DB_PASSWORD`: senha do PostgreSQL no `docker-compose.yml`
 
 ### Frontend
 
-- `VITE_API_URL`: URL base da API; padrão `http://127.0.0.1:8000`
+- `VITE_API_URL`: URL base do backend já com prefixo `/api`
 
 ## Endpoints principais
 
-- `POST /auth/login`
-- `GET /auth/me`
-- `PATCH /auth/me`
-- `POST /auth/change-password`
-- `GET /health`
-- `GET /namespaces`
-- `POST /namespaces`
-- `PATCH /namespaces/{namespace_id}`
-- `DELETE /namespaces/{namespace_id}`
-- `POST /namespaces/{namespace_id}/cards`
-- `PATCH /cards/{card_id}`
-- `DELETE /cards/{card_id}`
+- `POST api/auth/login`
+- `GET api/auth/me`
+- `PATCH api/auth/me`
+- `POST api/auth/change-password`
+- `GET api/health`
+- `GET api/namespaces`
+- `POST api/namespaces`
+- `PATCH api/namespaces/{namespace_id}`
+- `DELETE api/namespaces/{namespace_id}`
+- `POST api/namespaces/{namespace_id}/cards`
+- `PATCH api/cards/{card_id}`
+- `DELETE api/cards/{card_id}`
 
 ## Script utilitário
 
-Existe um script para resetar a senha do administrador diretamente no banco:
+Existe um script para resetar a senha do administrador diretamente no banco (mas voce deve lembrar a senha do banco)
 
 ```bash
-python3 scripts/reset_admin_password.py --password nova-senha-segura
+python3 scripts/reset_admin_password.py --password nova-senha
 ```
 
 Exemplo com opções adicionais:
@@ -200,8 +218,9 @@ python3 scripts/reset_admin_password.py \
   --must-change-password
 ```
 
-## Documentação
+## Documentação e ideias futuras (não implementarei agora)
 
+- [DEPLOY.md](DEPLOY.md): deploy do backend em container e frontend estático
 - [docs/README.md](docs/README.md): índice da documentação
 - [docs/CONTRATO.md](docs/CONTRATO.md): contrato draft de produto e integração
 - [docs/ESTRATEGIA.md](docs/ESTRATEGIA.md): estratégia incremental baseada no contrato

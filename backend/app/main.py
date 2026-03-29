@@ -37,11 +37,11 @@ STATUSES = ("do", "doing", "done")
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
-app = FastAPI(title="Simple Kanban")
+app = FastAPI(title="Dead Simple Kanban")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
     allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -99,12 +99,12 @@ def on_startup() -> None:
             db.commit()
 
 
-@app.get("/health")
+@app.get("/api/health")
 def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/auth/login", response_model=LoginResponse)
+@app.post("/api/auth/login", response_model=LoginResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
     bootstrap_admin_if_needed(db)
     token, user = issue_token(db, payload.username, payload.password)
@@ -115,14 +115,14 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
     )
 
 
-@app.get("/auth/me", response_model=UserResponse)
+@app.get("/api/auth/me", response_model=UserResponse)
 def get_current_session_user(
     user: User = Depends(require_auth),
 ) -> User:
     return user
 
 
-@app.post("/auth/change-password", response_model=UserResponse)
+@app.post("/api/auth/change-password", response_model=UserResponse)
 def change_password(
     payload: ChangePasswordRequest,
     user: User = Depends(require_auth),
@@ -138,7 +138,7 @@ def change_password(
     return user
 
 
-@app.patch("/auth/me", response_model=UserResponse)
+@app.patch("/api/auth/me", response_model=UserResponse)
 def update_profile(
     payload: ProfileUpdateRequest,
     user: User = Depends(require_auth),
@@ -177,7 +177,7 @@ def update_profile(
     return user
 
 
-@app.get("/namespaces", response_model=list[NamespaceResponse])
+@app.get("/api/namespaces", response_model=list[NamespaceResponse])
 def get_namespaces(
     _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
@@ -185,7 +185,7 @@ def get_namespaces(
     return list_namespaces(db)
 
 
-@app.post("/namespaces", response_model=list[NamespaceResponse], status_code=status.HTTP_201_CREATED)
+@app.post("/api/namespaces", response_model=list[NamespaceResponse], status_code=status.HTTP_201_CREATED)
 def create_namespace(
     payload: NamespaceCreate,
     _: User = Depends(require_active_user),
@@ -197,7 +197,7 @@ def create_namespace(
     return list_namespaces(db)
 
 
-@app.patch("/namespaces/{namespace_id}", response_model=list[NamespaceResponse])
+@app.patch("/api/namespaces/{namespace_id}", response_model=list[NamespaceResponse])
 def rename_namespace(
     namespace_id: int,
     payload: NamespaceUpdate,
@@ -210,7 +210,7 @@ def rename_namespace(
     return list_namespaces(db)
 
 
-@app.delete("/namespaces/{namespace_id}", response_model=list[NamespaceResponse])
+@app.delete("/api/namespaces/{namespace_id}", response_model=list[NamespaceResponse])
 def delete_namespace(
     namespace_id: int,
     _: User = Depends(require_active_user),
@@ -227,7 +227,7 @@ def delete_namespace(
     return list_namespaces(db)
 
 
-@app.post("/namespaces/{namespace_id}/cards", response_model=CardResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/api/namespaces/{namespace_id}/cards", response_model=CardResponse, status_code=status.HTTP_201_CREATED)
 def create_card(
     namespace_id: int,
     payload: CardCreate,
@@ -252,7 +252,7 @@ def create_card(
     return card
 
 
-@app.patch("/cards/{card_id}", response_model=CardResponse)
+@app.patch("/api/cards/{card_id}", response_model=CardResponse)
 def update_card(
     card_id: int,
     payload: CardUpdate,
@@ -304,7 +304,7 @@ def update_card(
     return card
 
 
-@app.get("/backup", response_model=BackupData)
+@app.get("/api/backup", response_model=BackupData)
 def export_backup(
     _: User = Depends(require_active_user),
     db: Session = Depends(get_db),
@@ -331,7 +331,7 @@ def export_backup(
     )
 
 
-@app.post("/restore", response_model=list[NamespaceResponse])
+@app.post("/api/restore", response_model=list[NamespaceResponse])
 def import_backup(
     payload: BackupData,
     _: User = Depends(require_active_user),
@@ -364,7 +364,7 @@ def import_backup(
     return list_namespaces(db)
 
 
-@app.delete("/cards/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/api/cards/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_card(
     card_id: int,
     _: User = Depends(require_active_user),

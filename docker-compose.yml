@@ -2,33 +2,34 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: kanban
-      POSTGRES_USER: kanban
-      POSTGRES_PASSWORD: kanban
+      POSTGRES_DB: "${DB_NAME:-kanban}"
+      POSTGRES_USER: "${DB_USER:-admin}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-admin123kanban}"
+
     ports:
       - "5847:5432"
     volumes:
       - ./backend/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kanban -d kanban"]
-      interval: 5s
-      timeout: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME:-kanban}"]
+      interval: 15s
+      timeout: 15s
       retries: 20
 
   backend:
     build:
       context: ./backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8391 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - path: ./backend/.env
         required: false
     environment:
-      DATABASE_URL: postgresql+psycopg://kanban:kanban@postgres:5432/kanban
+      DATABASE_URL: "postgresql+psycopg://${DB_USER:-admin}:${DB_PASSWORD:-admin123kanban}@postgres:5432/${DB_NAME:-kanban}"
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "8391:8391"
+      - "8391:8000"
     volumes:
       - ./backend/app:/app/app
       - ./backend/data:/app/data
@@ -36,9 +37,11 @@ services:
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile.dev
     command: npm run dev -- --host 0.0.0.0 --port 5679
     environment:
-      VITE_API_URL: http://localhost:8391
+      VITE_API_URL: "${VITE_API_URL:-http://localhost:8391/api}"
+
     depends_on:
       - backend
     ports:

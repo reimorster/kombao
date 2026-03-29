@@ -4,7 +4,7 @@ import type { FormEvent } from "react";
 import type { LoginResponse as AuthLoginResponse, AuthUser } from "../types/auth";
 import type { AuthFormState } from "../types/app";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
 const TOKEN_STORAGE_KEY = "kanban_token";
 
 export function useSession() {

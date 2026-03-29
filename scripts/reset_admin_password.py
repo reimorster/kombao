@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--database-url",
-        default=os.getenv("DATABASE_URL") or "postgresql+psycopg://kanban:kanban@localhost:5432/kanban",
+        default=os.getenv("DATABASE_URL") or "postgresql+psycopg://admin:admin123kanban@localhost:5847/kanban",
         help="URL de conexao com o PostgreSQL.",
     )
     parser.add_argument(
